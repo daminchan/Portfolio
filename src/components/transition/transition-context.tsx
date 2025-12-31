@@ -8,14 +8,11 @@
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
-type TransitionType = 'default' | 'pixel';
-
 interface TransitionContextType {
   isTransitioning: boolean;
   targetHref: string | null;
-  isTransitionComplete: boolean;  // トランジション完全終了フラグ
-  transitionType: TransitionType;  // トランジションタイプ
-  startTransition: (href: string, type?: TransitionType) => void;
+  isTransitionComplete: boolean;
+  startTransition: (href: string) => void;
   endTransition: () => void;
   setTransitionComplete: (value: boolean) => void;
 }
@@ -26,13 +23,11 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [targetHref, setTargetHref] = useState<string | null>(null);
   const [isTransitionComplete, setIsTransitionComplete] = useState(true);
-  const [transitionType, setTransitionType] = useState<TransitionType>('default');
 
-  const startTransition = useCallback((href: string, type: TransitionType = 'default') => {
+  const startTransition = useCallback((href: string) => {
     setTargetHref(href);
-    setTransitionType(type);
     setIsTransitioning(true);
-    setIsTransitionComplete(false);  // トランジション開始時にリセット
+    setIsTransitionComplete(false);
   }, []);
 
   const endTransition = useCallback(() => {
@@ -50,7 +45,6 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
         isTransitioning,
         targetHref,
         isTransitionComplete,
-        transitionType,
         startTransition,
         endTransition,
         setTransitionComplete,

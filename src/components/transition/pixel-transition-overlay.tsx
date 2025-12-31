@@ -1,38 +1,26 @@
 /**
- * PixelTransitionOverlay - ピクセル分割フェードトランジション (Aプラン)
+ * PixelTransitionOverlay - 長方形ブロック方式
  *
- * Worksトランジションと同じDOMオーバーレイ方式。
- * 違いは最後の消え方（縮小ではなくフェードアウト）。
- *
- * 【フロー】
- * 1. クリック → グリッド線を表示
- * 2. グリッド線表示後 → ブロックを背景色で塗りつぶし
- * 3. router.push()で遷移
- * 4. 遷移完了後 → ブロックがランダム順にフェードアウト
+ * 遷移先ページを長方形ブロック単位でランダムに表示する。
+ * clip-pathで遷移先をクリップし、ホームが見える状態から
+ * ブロック単位で遷移先が現れる。
  */
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTransition } from './transition-context';
 
 // アニメーション時間
-const GRID_LINE_DURATION = 300;   // グリッド線が現れる
-const BLOCK_FILL_DELAY = 100;     // グリッド線→ブロック塗りつぶし
-const FADE_DURATION = 400;        // 各ブロックのフェード
-const MAX_FADE_DELAY = 500;       // フェード開始の最大遅延
+const GRID_LINE_DURATION = 200;
+const TOTAL_REVEAL_TIME = 800;
+const BATCH_INTERVAL = 30;
 
 // グリッド設定
-const GRID_ROWS = 5;
-const GRID_COLS = 7;
+const GRID_ROWS = 4;
+const GRID_COLS = 6;
 
-// 背景色
-const BG_COLORS = [
-  'rgb(245, 240, 232)',  // メイン背景色
-  'rgb(235, 230, 222)',  // 少し暗め
-];
-
-type Phase = 'idle' | 'gridLines' | 'blocked' | 'fading' | 'done';
+type Phase = 'idle' | 'waiting' | 'gridLines' | 'revealing' | 'done';
 
 interface Block {
   id: number;
@@ -40,8 +28,18 @@ interface Block {
   y: number;
   width: number;
   height: number;
-  fadeDelay: number;
-  color: string;
+}
+
+// シード付きシャッフル
+function seededShuffle<T>(array: T[], seed: number): T[] {
+  const result = [...array];
+  let s = seed;
+  for (let i = result.length - 1; i > 0; i--) {
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s / 233280) * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
 }
 
 function createBlocks(): Block[] {
@@ -51,23 +49,12 @@ function createBlocks(): Block[] {
 
   for (let row = 0; row < GRID_ROWS; row++) {
     for (let col = 0; col < GRID_COLS; col++) {
-      const id = row * GRID_COLS + col;
-
-      // 固定シードの擬似ランダム
-      const seed = (id * 9301 + 49297) % 233280;
-      const fadeDelay = (seed / 233280) * MAX_FADE_DELAY;
-
-      // 色を交互に
-      const colorIndex = (row + col) % 2;
-
       blocks.push({
-        id,
+        id: row * GRID_COLS + col,
         x: col * blockWidth,
         y: row * blockHeight,
         width: blockWidth,
         height: blockHeight,
-        fadeDelay,
-        color: BG_COLORS[colorIndex],
       });
     }
   }
@@ -75,171 +62,204 @@ function createBlocks(): Block[] {
   return blocks;
 }
 
+function createRevealOrder(totalBlocks: number): number[] {
+  return seededShuffle(
+    Array.from({ length: totalBlocks }, (_, i) => i),
+    12345
+  );
+}
+
 export function PixelTransitionOverlay() {
   const router = useRouter();
   const pathname = usePathname();
-  const { isTransitioning, targetHref, transitionType, endTransition, setTransitionComplete } =
+  const { isTransitioning, targetHref, endTransition, setTransitionComplete } =
     useTransition();
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [blocks] = useState(() => createBlocks());
-  const [isNavigationComplete, setIsNavigationComplete] = useState(false);
+  const [revealOrder] = useState(() => createRevealOrder(GRID_ROWS * GRID_COLS));
+  const [revealedCount, setRevealedCount] = useState(0);
+  const [gridOpacity, setGridOpacity] = useState(0);
 
   const hasNavigatedRef = useRef(false);
   const startPathnameRef = useRef<string | null>(null);
+  const animationRef = useRef<number | null>(null);
 
-  // トランジション開始時にパスを記録（一度だけ）
+  const revealedBlocks = new Set(revealOrder.slice(0, revealedCount));
+
+  const cleanup = useCallback(() => {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
-    if (isTransitioning && targetHref && transitionType === 'pixel') {
+    if (isTransitioning && targetHref) {
       if (startPathnameRef.current === null) {
         startPathnameRef.current = pathname;
       }
     }
-  }, [isTransitioning, targetHref, transitionType, pathname]);
+  }, [isTransitioning, targetHref, pathname]);
 
-  // トランジション開始
   useEffect(() => {
-    if (!isTransitioning || !targetHref || transitionType !== 'pixel') return;
+    if (!isTransitioning || !targetHref) return;
     if (hasNavigatedRef.current) return;
 
-    // 状態リセット
-    setPhase('idle');
-    setIsNavigationComplete(false);
-    hasNavigatedRef.current = false;
+    hasNavigatedRef.current = true;
+    setRevealedCount(0);
+    setPhase('waiting');
+    setGridOpacity(0);
 
-    // プリフェッチ
     router.prefetch(targetHref);
+    router.push(targetHref);
+  }, [isTransitioning, targetHref, router]);
 
-    // グリッド線開始
-    const gridTimer = setTimeout(() => {
+  useEffect(() => {
+    if (!isTransitioning) return;
+    if (!startPathnameRef.current) return;
+    if (pathname === startPathnameRef.current) return;
+    if (phase !== 'waiting') return;
+
+    const timer = setTimeout(() => {
       setPhase('gridLines');
+      setGridOpacity(1);
     }, 50);
 
-    return () => clearTimeout(gridTimer);
-  }, [isTransitioning, targetHref, transitionType, router]);
+    return () => clearTimeout(timer);
+  }, [pathname, isTransitioning, phase]);
 
-  // グリッド線完了 → ブロック塗りつぶし + 遷移
   useEffect(() => {
     if (phase !== 'gridLines') return;
 
-    const blockTimer = setTimeout(() => {
-      setPhase('blocked');
+    const timer = setTimeout(() => {
+      setPhase('revealing');
+      setTransitionComplete(true);
+    }, GRID_LINE_DURATION);
 
-      // 遷移実行
-      if (!hasNavigatedRef.current && targetHref) {
-        hasNavigatedRef.current = true;
-        router.push(targetHref);
+    return () => clearTimeout(timer);
+  }, [phase, setTransitionComplete]);
+
+  useEffect(() => {
+    if (phase !== 'revealing') return;
+
+    const totalBlocks = blocks.length;
+    const blocksPerBatch = Math.ceil(totalBlocks / (TOTAL_REVEAL_TIME / BATCH_INTERVAL));
+    let currentCount = 0;
+    let lastTime = performance.now();
+
+    const animate = (time: number) => {
+      const elapsed = time - lastTime;
+
+      if (elapsed >= BATCH_INTERVAL) {
+        currentCount = Math.min(currentCount + blocksPerBatch, totalBlocks);
+        setRevealedCount(currentCount);
+        lastTime = time;
       }
-    }, GRID_LINE_DURATION + BLOCK_FILL_DELAY);
 
-    return () => clearTimeout(blockTimer);
-  }, [phase, targetHref, router]);
+      if (currentCount < totalBlocks) {
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    };
 
-  // 遷移完了を検知
+    animationRef.current = requestAnimationFrame(animate);
+
+    return cleanup;
+  }, [phase, blocks.length, cleanup]);
+
   useEffect(() => {
-    if (
-      isTransitioning &&
-      startPathnameRef.current &&
-      pathname !== startPathnameRef.current &&
-      !isNavigationComplete
-    ) {
-      setIsNavigationComplete(true);
-    }
-  }, [pathname, isTransitioning, isNavigationComplete]);
+    if (phase !== 'revealing') return;
+    if (revealedCount < blocks.length) return;
 
-  // ブロック塗りつぶし完了 AND 遷移完了 → フェードアウト開始
-  useEffect(() => {
-    if (phase === 'blocked' && isNavigationComplete) {
-      const fadeTimer = setTimeout(() => {
-        setPhase('fading');
-        setTransitionComplete(true);
-      }, 100);
-      return () => clearTimeout(fadeTimer);
-    }
-  }, [phase, isNavigationComplete, setTransitionComplete]);
+    setGridOpacity(0);
 
-  // フェードアウト完了 → 終了
-  useEffect(() => {
-    if (phase !== 'fading') return;
-
-    const endTimer = setTimeout(() => {
+    const timer = setTimeout(() => {
       setPhase('done');
       endTransition();
-    }, MAX_FADE_DELAY + FADE_DURATION + 100);
+    }, 300);
 
-    return () => clearTimeout(endTimer);
-  }, [phase, endTransition]);
+    return () => clearTimeout(timer);
+  }, [phase, revealedCount, blocks.length, endTransition]);
 
-  // 終了後にリセット
   useEffect(() => {
     if (phase === 'done') {
-      const resetTimer = setTimeout(() => {
+      const timer = setTimeout(() => {
         setPhase('idle');
         hasNavigatedRef.current = false;
         startPathnameRef.current = null;
+        setRevealedCount(0);
+        cleanup();
       }, 100);
-      return () => clearTimeout(resetTimer);
+      return () => clearTimeout(timer);
     }
-  }, [phase]);
+  }, [phase, cleanup]);
 
-  // pixel以外は表示しない
-  if (transitionType !== 'pixel') return null;
   if (phase === 'idle' && !isTransitioning) return null;
 
+  const showGrid = phase !== 'idle' && phase !== 'done';
+  const isRevealing = phase === 'revealing' || phase === 'done';
+  const isComplete = revealedCount >= blocks.length;
+
   return (
-    <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
-      {blocks.map((block) => {
-        const isGridLines = phase === 'gridLines';
-        const isBlocked = phase === 'blocked';
-        const isFading = phase === 'fading' || phase === 'done';
+    <>
+      {/* SVG ClipPath定義 */}
+      <svg
+        style={{
+          position: 'absolute',
+          width: 0,
+          height: 0,
+          overflow: 'hidden',
+        }}
+      >
+        <defs>
+          <clipPath id="pixel-reveal-clip" clipPathUnits="objectBoundingBox">
+            {blocks
+              .filter((block) => revealedBlocks.has(block.id))
+              .map((block) => (
+                <rect
+                  key={block.id}
+                  x={block.x / 100}
+                  y={block.y / 100}
+                  width={block.width / 100 + 0.001}
+                  height={block.height / 100 + 0.001}
+                />
+              ))}
+          </clipPath>
+        </defs>
+      </svg>
 
-        // グリッド線の表示
-        const lineOpacity = isGridLines || isBlocked || isFading ? 1 : 0;
+      {/* グリッド線 */}
+      {showGrid && (
+        <div
+          className="fixed inset-0 pointer-events-none overflow-hidden"
+          style={{
+            zIndex: 30,
+            opacity: gridOpacity,
+            transition: `opacity ${GRID_LINE_DURATION}ms ease-out`,
+          }}
+        >
+          {blocks.map((block) => (
+            <div
+              key={block.id}
+              className="absolute"
+              style={{
+                left: `${block.x}%`,
+                top: `${block.y}%`,
+                width: `${block.width}%`,
+                height: `${block.height}%`,
+                border: '1px solid rgba(80, 70, 60, 0.25)',
+              }}
+            />
+          ))}
+        </div>
+      )}
 
-        // ブロックの表示
-        let blockOpacity = 0;
-        if (isBlocked) {
-          blockOpacity = 1;
-        } else if (isFading) {
-          blockOpacity = phase === 'done' ? 0 : 1;
+      {/* 遷移先ページのclip-pathを制御 */}
+      <style>{`
+        .page-overlay {
+          clip-path: ${isComplete ? 'none' : isRevealing && revealedCount > 0 ? 'url(#pixel-reveal-clip)' : 'polygon(0 0, 0 0, 0 0, 0 0)'};
         }
-
-        return (
-          <div
-            key={block.id}
-            className="absolute"
-            style={{
-              left: `${block.x}%`,
-              top: `${block.y}%`,
-              width: `${block.width}%`,
-              height: `${block.height}%`,
-            }}
-          >
-            {/* グリッド線 */}
-            <div
-              className="absolute inset-0"
-              style={{
-                border: '1px solid rgba(80, 70, 60, 0.3)',
-                opacity: lineOpacity,
-                transition: `opacity ${GRID_LINE_DURATION}ms ease-out`,
-              }}
-            />
-
-            {/* ブロック（塗りつぶし） */}
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundColor: block.color,
-                opacity: isFading ? 0 : blockOpacity,
-                transition: isFading
-                  ? `opacity ${FADE_DURATION}ms ease-out`
-                  : `opacity ${BLOCK_FILL_DELAY}ms ease-out`,
-                transitionDelay: isFading ? `${block.fadeDelay}ms` : '0ms',
-              }}
-            />
-          </div>
-        );
-      })}
-    </div>
+      `}</style>
+    </>
   );
 }

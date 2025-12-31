@@ -59,7 +59,6 @@ export function NavCard({ item, position, index, onSelect, onNavigate, isFront }
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotateY, setRotateY] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const [isDisappearing, setIsDisappearing] = useState(false);
 
   const pos = POSITIONS[position];
   const floatClass = FLOAT_ANIMATIONS[index % FLOAT_ANIMATIONS.length];
@@ -90,8 +89,6 @@ export function NavCard({ item, position, index, onSelect, onNavigate, isFront }
     if (!isFront) {
       onSelect();
     } else {
-      // カード消えるアニメーション + トランジション同時発火
-      setIsDisappearing(true);
       onNavigate(item.href);
     }
   }, [isFront, onSelect, onNavigate, item.href]);
@@ -123,14 +120,11 @@ export function NavCard({ item, position, index, onSelect, onNavigate, isFront }
           className="cursor-pointer"
           style={{
             transform: `
-              scale(${isDisappearing ? 0.9 : isHovered && isFront ? pos.scale * 1.05 : pos.scale})
+              scale(${isHovered && isFront ? pos.scale * 1.05 : pos.scale})
               perspective(1000px)
               rotateY(${isFront ? rotateY : 0}deg)
             `,
-            opacity: isDisappearing ? 0 : 1,
-            transition: isDisappearing
-              ? 'transform 0.25s ease-out, opacity 0.25s ease-out'
-              : 'transform 0.3s ease-out',
+            transition: 'transform 0.3s ease-out',
           }}
         >
           {/* カード本体 */}

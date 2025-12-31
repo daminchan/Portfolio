@@ -64,10 +64,7 @@ export function MainContent() {
   // ページ遷移トリガー
   const handleNavigate = useCallback(
     (href: string) => {
-      // Contact, Aboutページへの遷移はピクセルトランジションを使用
-      const pixelPages = ['/contact', '/about'];
-      const transitionType = pixelPages.includes(href) ? 'pixel' : 'default';
-      startTransition(href, transitionType);
+      startTransition(href);
     },
     [startTransition]
   );
