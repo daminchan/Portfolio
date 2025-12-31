@@ -111,9 +111,9 @@ export default function WorksPage() {
       />
 
       {/* メインコンテンツ */}
-      <div className="relative z-10 flex min-h-screen">
+      <div className="relative z-10 flex min-h-screen max-w-6xl mx-auto">
         {/* 左サイドバー */}
-        <div className="w-[35%] flex-shrink-0 p-10">
+        <div className="w-[55%] flex-shrink-0 p-10">
           {/* タイトル */}
           <h1
             className="text-6xl font-normal tracking-[0.2em] text-gray-700 mb-16"
@@ -214,7 +214,7 @@ export default function WorksPage() {
         </div>
 
         {/* 右コンテンツエリア - カード表示 */}
-        <div className="w-[65%] flex items-center justify-center">
+        <div className="w-[45%] flex items-center justify-center">
           <div
             style={{
               opacity: visibleItems.has('card') ? 1 : 0,
