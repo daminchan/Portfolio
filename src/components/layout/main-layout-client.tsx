@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { Header } from './header';
-import { EntranceContainer } from '@/components/home';
+import { HomeContainer } from '@/components/home';
 
 interface MainLayoutClientProps {
   children: React.ReactNode;
@@ -32,7 +32,7 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
         }}
       >
         <div className="p-4 lg:p-6">
-          <EntranceContainer />
+          <HomeContainer />
         </div>
       </div>
 

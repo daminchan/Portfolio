@@ -1,5 +1,5 @@
 /**
- * NavCard - ナビゲーションカード
+ * NavigationCard - ナビゲーションカード
  *
  * 3D配置されたカードコンポーネント。
  * - 手前のカード: ホバーで拡大 + マウス追従回転（横方向）
@@ -46,7 +46,7 @@ const FLOAT_ANIMATIONS = [
   'animate-float-delayed-2',
 ];
 
-interface NavCardProps {
+interface NavigationCardProps {
   item: NavItem;
   position: CardPosition;
   index: number;
@@ -55,7 +55,7 @@ interface NavCardProps {
   isFront: boolean;
 }
 
-export function NavCard({ item, position, index, onSelect, onNavigate, isFront }: NavCardProps) {
+export function NavigationCard({ item, position, index, onSelect, onNavigate, isFront }: NavigationCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotateY, setRotateY] = useState(0);
   const [isHovered, setIsHovered] = useState(false);

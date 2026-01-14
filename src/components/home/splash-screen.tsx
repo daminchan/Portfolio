@@ -1,14 +1,13 @@
 /**
  * SplashScreen - サイト訪問時の導入画面
  *
- * クリックで波紋エフェクトが広がり、フェードアウトしてメインコンテンツへ遷移する。
+ * クリックで波紋エフェクトが広がり、フェードアウトしてカードギャラリーへ遷移する。
  * 幻想的な霧の背景とアニメーションで没入感を演出。
  */
 'use client';
 
 import { useState, useCallback } from 'react';
 import { Sparkles } from 'lucide-react';
-import { RippleEffect, type Ripple } from './ripple-effect';
 import { LABELS } from '@/lib/constants';
 import { SPLASH_ANIMATION } from '@/lib/animations';
 
@@ -16,8 +15,23 @@ interface SplashScreenProps {
   onEnter: () => void;
 }
 
+/**
+ * 波紋エフェクトの位置情報
+ * クリック位置に波紋アニメーションを表示するために使用
+ */
+interface RipplePosition {
+  /** クリック位置のX座標 */
+  x: number;
+  /** クリック位置のY座標 */
+  y: number;
+}
+
 export function SplashScreen({ onEnter }: SplashScreenProps) {
-  const [ripples, setRipples] = useState<Ripple[]>([]);
+  /**
+   * 表示中の波紋位置
+   * クリック時に波紋を追加し、画面遷移後に自動クリア
+   */
+  const [ripple, setRipple] = useState<RipplePosition | null>(null);
   const [isImpact, setIsImpact] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -25,11 +39,7 @@ export function SplashScreen({ onEnter }: SplashScreenProps) {
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (isExiting) return;
 
-      const x = e.clientX;
-      const y = e.clientY;
-      const id = Date.now();
-
-      setRipples((prev) => [...prev, { id, x, y }]);
+      setRipple({ x: e.clientX, y: e.clientY });
       setIsImpact(true);
       setIsExiting(true);
 
@@ -38,10 +48,6 @@ export function SplashScreen({ onEnter }: SplashScreenProps) {
       setTimeout(() => {
         onEnter();
       }, SPLASH_ANIMATION.TIMING.EXIT_DELAY);
-
-      setTimeout(() => {
-        setRipples((prev) => prev.filter((r) => r.id !== id));
-      }, SPLASH_ANIMATION.TIMING.RIPPLE_CLEANUP);
     },
     [isExiting, onEnter]
   );
@@ -69,8 +75,21 @@ export function SplashScreen({ onEnter }: SplashScreenProps) {
         />
       </div>
 
-      {/* 波紋エフェクト */}
-      <RippleEffect ripples={ripples} />
+      {/* 波紋エフェクト（インライン） */}
+      {ripple && (
+        <div className="pointer-events-none absolute inset-0 z-10">
+          <div
+            className={`${SPLASH_ANIMATION.CLASS.RIPPLE} absolute rounded-full border border-blue-200/30 blur-[12px]`}
+            style={{
+              left: ripple.x,
+              top: ripple.y,
+              width: 0,
+              height: 0,
+              transform: 'translate(-50%, -50%)',
+            }}
+          />
+        </div>
+      )}
 
       {/* メインテキスト */}
       <div

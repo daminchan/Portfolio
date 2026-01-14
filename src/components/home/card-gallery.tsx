@@ -1,5 +1,5 @@
 /**
- * MainContent - メインコンテンツ
+ * CardGallery - カードギャラリー
  *
  * スプラッシュ画面通過後に表示されるナビゲーション画面。
  * 3D配置されたカードから遷移先を選択する。
@@ -7,7 +7,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { NavCard } from './nav-card';
+import { NavigationCard } from './navigation-card';
 import { useTransition } from '@/components/transition';
 import type { NavItem, CardPosition } from '@/types';
 
@@ -39,7 +39,7 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export function MainContent() {
+export function CardGallery() {
   const [frontIndex, setFrontIndex] = useState(0);
   const { startTransition } = useTransition();
 
@@ -88,7 +88,7 @@ export function MainContent() {
         {NAV_ITEMS.map((item, index) => {
           const position = getPosition(index);
           return (
-            <NavCard
+            <NavigationCard
               key={item.id}
               item={item}
               position={position}
