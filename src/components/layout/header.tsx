@@ -1,5 +1,3 @@
-'use client';
-
 import { LABELS } from '@/lib/constants';
 
 export function Header() {

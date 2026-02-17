@@ -128,7 +128,7 @@ export function NavigationCard({ item, position, index, onSelect, onNavigate, is
           }}
         >
           {/* カード本体 */}
-          <div className="relative h-[400px] w-[300px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+          <div className="relative h-[400px] w-[300px] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
             <CardBackground cardBackground={item.cardBackground} />
             <CardVerticalLabel id={item.id} hasBackground={!!item.cardBackground} />
             <CardCharacter item={item} />
@@ -188,7 +188,7 @@ function CardVerticalLabel({ id, hasBackground }: { id: string; hasBackground: b
     <div className="absolute left-3 top-4 z-10">
       <p
         className={`text-[10px] font-light tracking-widest ${
-          hasBackground ? 'text-white/70' : 'text-gray-500'
+          hasBackground ? 'text-white/70' : 'text-muted-foreground'
         }`}
         style={{ writingMode: 'vertical-rl' }}
       >
@@ -214,7 +214,7 @@ function CardCharacter({ item }: { item: NavItem }) {
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <span className={`text-6xl ${item.cardBackground ? 'text-white/30' : 'text-gray-300'}`}>
+            <span className={`text-6xl ${item.cardBackground ? 'text-white/30' : 'text-stone-300'}`}>
               ?
             </span>
           </div>
@@ -233,17 +233,17 @@ function CardTitle({ item }: { item: NavItem }) {
         hasBackground ? 'backdrop-blur-sm bg-black/30' : ''
       }`}
     >
-      <div className={`border-t pt-3 ${hasBackground ? 'border-white/30' : 'border-gray-300'}`}>
+      <div className={`border-t pt-3 ${hasBackground ? 'border-white/30' : 'border-border'}`}>
         <h3
           className={`text-xl font-bold tracking-wider ${
-            hasBackground ? 'text-white' : 'text-gray-800'
+            hasBackground ? 'text-white' : 'text-primary'
           }`}
         >
           {item.title}
         </h3>
         <p
           className={`text-sm tracking-widest ${
-            hasBackground ? 'text-white/80' : 'text-gray-500'
+            hasBackground ? 'text-white/80' : 'text-muted-foreground'
           }`}
         >
           {item.description}

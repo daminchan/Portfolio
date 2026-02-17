@@ -118,7 +118,7 @@ export function WorksCard({ item, onClick }: WorksCardProps) {
       >
         {/* カード本体 - サイトコンセプトに合わせた薄いグレー */}
         <div
-          className="relative h-[400px] w-[300px] overflow-hidden rounded-2xl border border-gray-200"
+          className="relative h-[400px] w-[300px] overflow-hidden rounded-2xl border border-border"
           style={{
             background: `
               linear-gradient(135deg,
@@ -157,7 +157,7 @@ export function WorksCard({ item, onClick }: WorksCardProps) {
           {/* アイコンエリア */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div
-              className="text-gray-600 transition-all duration-300"
+              className="text-secondary-foreground transition-all duration-300"
               style={{
                 filter: isHovered ? 'drop-shadow(0 0 15px rgba(100,100,100,0.3))' : 'none',
                 transform: isPressed ? 'scale(0.9)' : 'scale(1)',
@@ -169,8 +169,8 @@ export function WorksCard({ item, onClick }: WorksCardProps) {
 
           {/* ラベル */}
           <div className="absolute bottom-0 left-0 right-0 p-6">
-            <div className="border-t border-gray-300 pt-4">
-              <h3 className="text-xl font-medium tracking-wider text-gray-700">
+            <div className="border-t border-border pt-4">
+              <h3 className="text-xl font-medium tracking-wider text-card-foreground">
                 {item.label}
               </h3>
             </div>

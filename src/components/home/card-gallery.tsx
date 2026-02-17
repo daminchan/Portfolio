@@ -7,37 +7,13 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { NavigationCard } from './navigation-card';
-import { useTransition } from '@/components/transition';
-import type { NavItem, CardPosition } from '@/types';
 
-// ナビゲーション先データ
-const NAV_ITEMS: NavItem[] = [
-  {
-    id: 'works',
-    title: 'Works',
-    description: '制作物',
-    href: '/works',
-    characterImage: '/characters/character1.png',
-    cardBackground: '/cards/card.jpg',
-  },
-  {
-    id: 'about',
-    title: 'About',
-    description: '自己紹介',
-    href: '/about',
-    characterImage: '/characters/placeholder.png',
-    cardBackground: '/cards/card3.jpg',
-  },
-  {
-    id: 'contact',
-    title: 'Contact',
-    description: 'お問い合わせ',
-    href: '/contact',
-    characterImage: '/characters/placeholder.png',
-    cardBackground: '/cards/card2.jpg',
-  },
-];
+import { useTransition } from '@/components/transition';
+import { NAV_ITEMS } from '@/lib/constants';
+
+import type { CardPosition } from '@/types';
+
+import { NavigationCard } from './navigation-card';
 
 export function CardGallery() {
   const [frontIndex, setFrontIndex] = useState(0);
@@ -103,7 +79,7 @@ export function CardGallery() {
 
       {/* ナビゲーションヒント */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-muted-foreground">
           クリックしてカードを選択
         </p>
       </div>

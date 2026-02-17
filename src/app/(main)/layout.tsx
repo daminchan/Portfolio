@@ -1,3 +1,4 @@
+import { TransitionWrapper } from '@/components/transition';
 import { MainLayoutClient } from '@/components/layout/main-layout-client';
 
 export default function MainLayout({
@@ -5,5 +6,9 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <MainLayoutClient>{children}</MainLayoutClient>;
+  return (
+    <TransitionWrapper>
+      <MainLayoutClient>{children}</MainLayoutClient>
+    </TransitionWrapper>
+  );
 }

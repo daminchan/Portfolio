@@ -9,7 +9,7 @@ interface MainLayoutClientProps {
 }
 
 // フルスクリーン表示するページ
-const FULLSCREEN_PAGES = ['/about', '/works', '/contact'];
+const FULLSCREEN_PAGES = ['/about', '/works', '/works/web', '/contact'];
 
 export function MainLayoutClient({ children }: MainLayoutClientProps) {
   const pathname = usePathname();

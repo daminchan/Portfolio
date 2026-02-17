@@ -47,7 +47,9 @@
       "WebFetch(domain:www.anthropic.com)",
       "Bash(ls:*)",
       "Bash(rm:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "WebFetch(domain:tkdodo.eu)",
+      "Bash(git status:*)"
     ],
     "deny": [],
     "ask": []
