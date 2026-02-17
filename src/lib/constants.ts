@@ -27,13 +27,6 @@ export const LABELS = {
   },
 } as const;
 
-// サイドバーナビゲーション
-export const SIDEBAR_NAV = [
-  { id: 'home', label: LABELS.NAV.HOME, href: ROUTES.HOME, icon: 'Home' },
-  { id: 'github', label: LABELS.NAV.GITHUB, href: ROUTES.GITHUB, icon: 'Github', external: true },
-  { id: 'contact', label: LABELS.NAV.CONTACT, href: ROUTES.CONTACT, icon: 'Mail' },
-] as const;
-
 // ホーム画面ナビゲーション
 export const NAV_ITEMS: NavItem[] = [
   {
@@ -41,7 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
     title: 'Works',
     description: '制作物',
     href: '/works',
-    characterImage: '/characters/placeholder.png',
+    characterImage: '/characters/character1.png',
     cardBackground: '/cards/card.jpg',
   },
   {
@@ -49,7 +42,7 @@ export const NAV_ITEMS: NavItem[] = [
     title: 'About',
     description: '自己紹介',
     href: '/about',
-    characterImage: '/characters/placeholder.png',
+    characterImage: '/characters/character1.png',
     cardBackground: '/cards/card3.jpg',
   },
   {
@@ -57,7 +50,7 @@ export const NAV_ITEMS: NavItem[] = [
     title: 'Contact',
     description: 'お問い合わせ',
     href: '/contact',
-    characterImage: '/characters/placeholder.png',
+    characterImage: '/characters/character1.png',
     cardBackground: '/cards/card2.jpg',
   },
 ];
