@@ -1,38 +1,99 @@
 ---
 name: component-creator
-description: Reactコンポーネントを作成する。UIパーツが必要な時に使用。Props型定義と50行分割ルールを適用。
+description: Reactコンポーネントを作成する。UIパーツが必要な時に使用。Server/Client判断・type定義・50行分割・compositionパターンを適用。
 ---
 
 # Component Creator
 
 Reactコンポーネントを作成するスキル。
 
-## 基本構造
+## 作成前の判断
 
-```typescript
-'use client';
+### Server or Client?（判断アルゴリズム）
 
-import { useState } from 'react';
-import { LABELS } from '@/lib/constants';
+**レベル1: 排除チェック（Client Component が必要）**
 
-interface ComponentNameProps {
-  userId: string;
-  onAction?: () => void;
+| 条件 | 理由 |
+|------|------|
+| useState / useEffect を使用 | Hooks は Client のみ |
+| onClick 等のイベントハンドラ | ブラウザイベント |
+| Framer Motion を使用 | `"use client"` 必須 |
+| ブラウザAPI（window 等） | サーバーに存在しない |
+
+**レベル2:** 上記いずれにも該当しない → **Server Component**
+
+**レベル3: 核心的質問**
+「このコンポーネントはユーザーインタラクションを処理するか？」
+
+詳細: @.claude/rules/component-patterns.md
+
+## Server Component テンプレート
+
+```tsx
+import Image from "next/image"
+
+type FeatureCardProps = {
+  title: string
+  imageUrl: string
 }
 
-export function ComponentName({ userId, onAction }: ComponentNameProps) {
-  const [state, setState] = useState(false);
-
-  const handleClick = () => {
-    // ロジック
-  };
-
+export function FeatureCard({ title, imageUrl }: FeatureCardProps) {
   return (
     <div>
-      {/* UI */}
+      <Image src={imageUrl} alt={title} width={400} height={300} />
+      <h3>{title}</h3>
     </div>
-  );
+  )
 }
+```
+
+## Client Component テンプレート
+
+```tsx
+"use client"
+
+import { useState } from "react"
+
+import { motion } from "framer-motion"
+
+type FeatureContentProps = {
+  id: string
+  initialData?: string
+}
+
+export function FeatureContent({ id, initialData }: FeatureContentProps) {
+  const [value, setValue] = useState(initialData ?? "")
+
+  const handleSubmit = () => {
+    // イベントハンドラでロジック処理（useEffect不要）
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <input value={value} onChange={(e) => setValue(e.target.value)} />
+      <button onClick={handleSubmit}>送信</button>
+    </motion.div>
+  )
+}
+```
+
+## Composition パターン
+
+```tsx
+// Client: インタラクションのみ
+"use client"
+type WrapperProps = { children: React.ReactNode }
+export function AnimatedWrapper({ children }: WrapperProps) {
+  return <motion.div animate={{ opacity: 1 }}>{children}</motion.div>
+}
+
+// Server Component から children で渡す
+<AnimatedWrapper>
+  <ServerOnlyContent data={data} />
+</AnimatedWrapper>
 ```
 
 ## 分割パターン（50行超え時）
@@ -46,73 +107,17 @@ components/[feature]/
 
 ## チェックリスト
 
-- [ ] Props型を定義
-- [ ] 50行超えは分割
-- [ ] 定数はconstants.tsから取得
-- [ ] 命名規則（kebab-case/PascalCase）
+- [ ] Server/Client の判断は正しいか
+- [ ] Props の `type` を定義したか
+- [ ] Props は最小限のデータか（DBオブジェクト全体を渡していないか）
+- [ ] 50行超えは分割したか
+- [ ] `"use client"` は最小のリーフに配置したか
+- [ ] 命名規則（ファイル: kebab-case / コンポーネント: PascalCase）
+- [ ] アニメーションが必要なら Framer Motion パターンに従っているか
 
----
+## 参照ルール
 
-## モーダルコンポーネントのパターン
-
-### 前のデータが残る問題の対策
-
-propsで渡されるデータが変わったときに、前のデータが一瞬表示される問題を防ぐ。
-
-```typescript
-interface ModalProps {
-  isOpen: boolean;
-  data: SomeData | null;
-  onClose: () => void;
-}
-
-export function Modal({ isOpen, data, onClose }: ModalProps) {
-  const [localData, setLocalData] = useState<SomeData[]>([]);
-  const prevIdRef = useRef<string | null>(null);
-
-  // ✅ IDの変更を検知して即座にリセット
-  useEffect(() => {
-    const currentId = data?.id || null;
-
-    if (currentId !== prevIdRef.current) {
-      // IDが変わったので即座にリセット
-      setLocalData(data?.items || []);
-      prevIdRef.current = currentId;
-    } else if (data?.items) {
-      // 同じIDのデータ更新
-      setLocalData(data.items);
-    }
-  }, [data]);
-
-  if (!isOpen || !data) return null;
-
-  return (
-    // モーダルUI
-  );
-}
-```
-
-### モーダル背景のパフォーマンス対策
-
-```typescript
-// ❌ backdrop-blurはFPS低下の原因
-<div className="bg-black/80 backdrop-blur-sm">
-
-// ✅ 代わりに不透明度を上げる
-<div className="bg-black/90">
-```
-
-### モバイルフッターに隠れる対策
-
-```typescript
-// フッターボタンにモバイル用パディング
-<div className="flex gap-3 pb-20 lg:pb-0">
-  <Button>次へ</Button>
-</div>
-```
-
----
-
-## 参考
-
-詳細なパターンは `.claude/rules/patterns.md` を参照
+- @.claude/rules/component-patterns.md
+- @.claude/rules/react-hooks.md
+- @.claude/rules/animation.md
+- @.claude/rules/typescript.md
