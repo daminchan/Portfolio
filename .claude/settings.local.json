@@ -49,7 +49,9 @@
       "Bash(rm:*)",
       "Bash(npm uninstall:*)",
       "WebFetch(domain:tkdodo.eu)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(test:*)",
+      "WebFetch(domain:conference.pixiv.co.jp)"
     ],
     "deny": [],
     "ask": []

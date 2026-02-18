@@ -99,79 +99,67 @@
   }
 }
 
-/* Splash Screen Animations */
-@keyframes ripple-expand {
-  0% {
-    width: 0;
-    height: 0;
-    opacity: 1;
-    box-shadow: 0 0 20px 5px rgba(191, 219, 254, 0.4);
-  }
-  100% {
-    width: 250vw;
-    height: 250vw;
-    opacity: 0;
-    box-shadow: 0 0 100px 50px rgba(191, 219, 254, 0);
-  }
+/* === Glitch Wipe Effect === */
+/* → 右方向 10%〜50% */
+@keyframes glitch-r10 { 0% { transform: translateX(0); } 50% { transform: translateX(10%); } 100% { transform: translateX(0); } }
+@keyframes glitch-r20 { 0% { transform: translateX(0); } 50% { transform: translateX(20%); } 100% { transform: translateX(0); } }
+@keyframes glitch-r30 { 0% { transform: translateX(0); } 50% { transform: translateX(30%); } 100% { transform: translateX(0); } }
+@keyframes glitch-r40 { 0% { transform: translateX(0); } 50% { transform: translateX(40%); } 100% { transform: translateX(0); } }
+@keyframes glitch-r50 { 0% { transform: translateX(0); } 50% { transform: translateX(50%); } 100% { transform: translateX(0); } }
+
+/* ← 左方向 10%〜50% */
+@keyframes glitch-l10 { 0% { transform: translateX(0); } 50% { transform: translateX(-10%); } 100% { transform: translateX(0); } }
+@keyframes glitch-l20 { 0% { transform: translateX(0); } 50% { transform: translateX(-20%); } 100% { transform: translateX(0); } }
+@keyframes glitch-l30 { 0% { transform: translateX(0); } 50% { transform: translateX(-30%); } 100% { transform: translateX(0); } }
+@keyframes glitch-l40 { 0% { transform: translateX(0); } 50% { transform: translateX(-40%); } 100% { transform: translateX(0); } }
+@keyframes glitch-l50 { 0% { transform: translateX(0); } 50% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+@keyframes glitch-flash {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
-@keyframes mist-slow {
-  0%,
-  100% {
-    transform: scale(1) translate(0, 0);
-  }
-  50% {
-    transform: scale(1.15) translate(1%, 2%);
-  }
+@keyframes glitch-reveal {
+  0% { transform: scale(2.5) rotate(0deg); }
+  100% { transform: scale(1) rotate(-6deg); }
 }
 
-@keyframes bounce-slow {
-  0%,
-  100% {
-    transform: translate(-50%, 0);
-  }
-  50% {
-    transform: translate(-50%, -10px);
-  }
+/* === Background Effects === */
+@keyframes scanline-scroll {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
 }
 
-@keyframes fade-pulse {
-  0%,
-  100% {
-    opacity: 0.2;
-  }
-  50% {
-    opacity: 0.5;
-  }
+@keyframes noise-flicker {
+  0%, 100% { opacity: var(--noise-opacity, 0.04); }
+  50% { opacity: calc(var(--noise-opacity, 0.04) * 1.5); }
 }
 
 @keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.animate-ripple-expand {
-  animation: ripple-expand 4.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+@keyframes fade-pulse {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.5; }
 }
 
-.animate-mist-slow {
-  animation: mist-slow 25s ease-in-out infinite;
+.animate-scanline-scroll {
+  animation: scanline-scroll var(--scanline-speed, 8s) linear infinite;
 }
 
-.animate-bounce-slow {
-  animation: bounce-slow 4s ease-in-out infinite;
-}
-
-.animate-fade-pulse {
-  animation: fade-pulse 3s ease-in-out infinite;
+.animate-noise-flicker {
+  animation: noise-flicker 0.15s steps(2) infinite;
 }
 
 .animate-fade-in {
   animation: fade-in 1s ease-out forwards;
+}
+
+.animate-fade-pulse {
+  animation: fade-pulse 3s ease-in-out infinite;
 }
 
 /* Navigation Card Animations */

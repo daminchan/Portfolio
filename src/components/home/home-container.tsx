@@ -9,7 +9,6 @@
 import { useState } from 'react';
 import { SplashScreen } from './splash-screen';
 import { CardGallery } from './card-gallery';
-import { SPLASH_ANIMATION } from '@/lib/animations';
 
 export function HomeContainer() {
   const [showSplash, setShowSplash] = useState(true);
@@ -23,7 +22,7 @@ export function HomeContainer() {
   }
 
   return (
-    <div className={SPLASH_ANIMATION.CLASS.FADE_IN}>
+    <div className="animate-fade-in">
       <CardGallery />
     </div>
   );

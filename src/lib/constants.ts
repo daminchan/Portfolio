@@ -16,10 +16,9 @@ export const LABELS = {
     CONTACT: 'お問い合わせ',
   },
   SPLASH: {
-    TITLE: 'Welcome',
-    SUBTITLE: 'Portfolio Site',
+    TITLE: 'welcome',
+    SUBTITLE: 'Portfolio',
     CTA: 'Touch to Begin',
-    FOOTER: 'Portfolio Entrance',
   },
   HOME: {
     TITLE: 'Main Content',
