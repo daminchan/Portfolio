@@ -12,6 +12,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+
+
 export const metadata: Metadata = {
   title: "MyPortfolio",
   description: "幻想的かつ現代的なポートフォリオ",

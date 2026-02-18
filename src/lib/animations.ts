@@ -73,26 +73,19 @@ export const ANIMATE = {
 
 // スプラッシュ画面用アニメーション
 export const SPLASH_ANIMATION = {
-  // クラス名
-  CLASS: {
-    RIPPLE: 'animate-ripple-expand',
-    MIST: 'animate-mist-slow',
-    BOUNCE: 'animate-bounce-slow',
-    FADE_PULSE: 'animate-fade-pulse',
-    FADE_IN: 'animate-fade-in',
+  // 各要素の出現ディレイ（ms）
+  DELAY: {
+    WELCOME: 300,
+    PORTFOLIO: 1000,
+    CTA: 2000,
   },
-  // タイミング（ms）
+  // 画面遷移タイミング（ms）
   TIMING: {
-    IMPACT_DURATION: 600,
-    EXIT_DELAY: 900,
-    RIPPLE_CLEANUP: 3000,
+    EXIT_DELAY: 600,
   },
   // トランジション
   TRANSITION: {
-    SCREEN: 'transition-all duration-[1200ms]',
-    CONTENT: 'transition-all duration-[800ms]',
-    INDICATOR: 'transition-all duration-700',
-    OPACITY: 'transition-opacity duration-700',
+    SCREEN: 'transition-opacity duration-[800ms]',
   },
 } as const;
 
