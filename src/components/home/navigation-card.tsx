@@ -1,259 +1,143 @@
 /**
- * NavigationCard - ナビゲーションカード
+ * NavigationCard - アーカイブカード（単体表示）
  *
- * 3D配置されたカードコンポーネント。
- * - 手前のカード: ホバーで拡大 + マウス追従回転（横方向）
- * - 奥のカード: クリックで手前に移動
+ * カードフレームは固定、中身のテキストのみ ScrambleText で切り替え。
+ * タブ切り替えは外部の NavButtonGroup が担当。
  */
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
-import Image from 'next/image';
-import type { NavItem, CardPosition, CardPositionStyle } from '@/types';
+import { useEffect, useRef } from 'react';
 
-// カード位置のスタイル定義
-const POSITIONS: Record<CardPosition, CardPositionStyle> = {
-  front: {
-    zIndex: 30,
-    scale: 1,
-    translateY: '0',
-    translateX: '0',
-    opacity: 1,
-    blur: 0,
-  },
-  backLeft: {
-    zIndex: 20,
-    scale: 0.8,
-    translateY: '-100px',
-    translateX: '-200px',
-    opacity: 0.6,
-    blur: 1,
-  },
-  backRight: {
-    zIndex: 20,
-    scale: 0.8,
-    translateY: '-100px',
-    translateX: '200px',
-    opacity: 0.6,
-    blur: 1,
-  },
+import Image from 'next/image';
+import { User, Briefcase, Mail, Terminal, ChevronRight } from 'lucide-react';
+
+import { ScrambleText } from '@/components/ui/scramble-text';
+
+import type { NavItem } from '@/types';
+
+type NavigationCardProps = {
+  item: NavItem;
+  refNumber: string;
+  onNavigate: () => void;
+  animateIn?: boolean;
 };
 
-// フロートアニメーションクラス
-const FLOAT_ANIMATIONS = [
-  'animate-float',
-  'animate-float-delayed',
-  'animate-float-delayed-2',
-];
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
+  about: User,
+  works: Briefcase,
+  contact: Mail,
+};
 
-interface NavigationCardProps {
-  item: NavItem;
-  position: CardPosition;
-  index: number;
-  onSelect: () => void;
-  onNavigate: (href: string) => void;
-  isFront: boolean;
-}
-
-export function NavigationCard({ item, position, index, onSelect, onNavigate, isFront }: NavigationCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [rotateY, setRotateY] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-
-  const pos = POSITIONS[position];
-  const floatClass = FLOAT_ANIMATIONS[index % FLOAT_ANIMATIONS.length];
-
-  // マウス追従回転（frontのみ・横方向のみ）
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!isFront || !cardRef.current) return;
-
-      const rect = cardRef.current.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-
-      setRotateY(((e.clientX - centerX) / (rect.width / 2)) * 20);
-    },
-    [isFront]
-  );
-
-  const handleMouseLeave = useCallback(() => {
-    setRotateY(0);
-    setIsHovered(false);
-  }, []);
-
-  const handleMouseEnter = useCallback(() => {
-    setIsHovered(true);
-  }, []);
-
-  const handleClick = useCallback(() => {
-    if (!isFront) {
-      onSelect();
-    } else {
-      onNavigate(item.href);
-    }
-  }, [isFront, onSelect, onNavigate, item.href]);
+export function NavigationCard({
+  item,
+  refNumber,
+  onNavigate,
+  animateIn = false,
+}: NavigationCardProps) {
+  const Icon = ICON_MAP[item.id] || User;
 
   return (
     <div
-      className="absolute left-1/2 top-1/2"
-      style={{
-        zIndex: pos.zIndex,
-        transform: `
-          translate(-50%, -50%)
-          translateX(${pos.translateX})
-          translateY(${pos.translateY})
-        `,
-        opacity: pos.opacity,
-        filter: pos.blur > 0 ? `blur(${pos.blur}px)` : 'none',
-        transition: 'transform 0.5s ease-out, opacity 0.5s ease-out, filter 0.5s ease-out',
-      }}
+      className="w-[480px] cursor-pointer border border-neutral-500/30 border-l-4 border-l-neutral-500 bg-stone-300 shadow-[25px_25px_60px_rgba(0,0,0,0.2)]"
+      onClick={onNavigate}
     >
-      {/* 浮遊アニメーション用ラッパー */}
-      <div className={floatClass}>
-        {/* tilt・スケール用ラッパー */}
-        <div
-          ref={cardRef}
-          onClick={handleClick}
-          onMouseMove={handleMouseMove}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          className="cursor-pointer"
-          style={{
-            transform: `
-              scale(${isHovered && isFront ? pos.scale * 1.05 : pos.scale})
-              perspective(1000px)
-              rotateY(${isFront ? rotateY : 0}deg)
-            `,
-            transition: 'transform 0.3s ease-out',
-          }}
-        >
-          {/* カード本体 */}
-          <div className="relative h-[400px] w-[300px] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
-            <CardBackground cardBackground={item.cardBackground} />
-            <CardVerticalLabel id={item.id} hasBackground={!!item.cardBackground} />
-            <CardCharacter item={item} />
-            <CardTitle item={item} />
-            <CardHoverEffect show={isFront && isHovered} />
-          </div>
-        </div>
-      </div>
+      <CardBody item={item} refNumber={refNumber} icon={Icon} animateIn={animateIn} itemId={item.id} />
     </div>
   );
 }
 
 // --- サブコンポーネント ---
 
-function CardBackground({ cardBackground }: { cardBackground: string | null }) {
-  if (cardBackground) {
-    return (
-      <div className="absolute inset-0">
-        <Image
-          src={cardBackground}
-          alt=""
-          fill
-          priority
-          sizes="300px"
-          unoptimized
-          className="object-cover"
-        />
-      </div>
-    );
-  }
+function CardBody({
+  item,
+  refNumber,
+  icon: Icon,
+  animateIn,
+  itemId,
+}: {
+  item: NavItem;
+  refNumber: string;
+  icon: React.ComponentType<{ size?: number }>;
+  animateIn: boolean;
+  itemId: string;
+}) {
+  return (
+    <div className="relative flex h-[480px] flex-col p-6">
+      <CardHeader item={item} refNumber={refNumber} icon={Icon} />
+      <CardPlaceholder animateIn={animateIn} itemId={itemId} />
+      <CardFooter />
+    </div>
+  );
+}
 
+function CardHeader({
+  item,
+  refNumber,
+  icon: Icon,
+}: {
+  item: NavItem;
+  refNumber: string;
+  icon: React.ComponentType<{ size?: number }>;
+}) {
   return (
     <>
-      {/* ダイヤモンドパターン背景 */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `
-            linear-gradient(45deg, #e5e5e5 25%, transparent 25%),
-            linear-gradient(-45deg, #e5e5e5 25%, transparent 25%),
-            linear-gradient(45deg, transparent 75%, #e5e5e5 75%),
-            linear-gradient(-45deg, transparent 75%, #e5e5e5 75%)
-          `,
-          backgroundColor: '#f5f5f5',
-          backgroundSize: '60px 60px',
-          backgroundPosition: '0 0, 0 30px, 30px -30px, -30px 0px',
-        }}
-      />
-      {/* オーバーレイグラデーション（パターン用） */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white/50 via-transparent to-white/70" />
+      <div className="absolute right-6 top-0 border-x border-b border-neutral-500/20 bg-neutral-500/10 px-3 py-1 font-mono text-[10px]">
+        <ScrambleText duration={400}>
+          {`REF: ${refNumber}`}
+        </ScrambleText>
+      </div>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest opacity-60">
+            System.Archive
+          </p>
+          <h3 className="text-lg font-bold uppercase leading-tight">
+            <ScrambleText duration={400}>
+              {item.title}
+            </ScrambleText>
+          </h3>
+        </div>
+        <div className="border border-neutral-500 p-1.5">
+          <Icon size={16} />
+        </div>
+      </div>
     </>
   );
 }
 
-function CardVerticalLabel({ id, hasBackground }: { id: string; hasBackground: boolean }) {
+/** 初回のみ GlitchPopup 完了を待つ: delay(500ms) + popup(400ms) */
+const MOCHI_INITIAL_DELAY_MS = 900;
+
+function CardPlaceholder({ animateIn, itemId }: { animateIn: boolean; itemId: string }) {
+  const hasPlayedOnce = useRef(false);
+
+  const delay = animateIn && !hasPlayedOnce.current ? MOCHI_INITIAL_DELAY_MS : 0;
+
+  useEffect(() => {
+    if (animateIn) hasPlayedOnce.current = true;
+  }, [animateIn]);
+
   return (
-    <div className="absolute left-3 top-4 z-10">
-      <p
-        className={`text-[10px] font-light tracking-widest ${
-          hasBackground ? 'text-white/70' : 'text-muted-foreground'
-        }`}
-        style={{ writingMode: 'vertical-rl' }}
-      >
-        {id.toUpperCase()}
-      </p>
+    <div className="relative flex grow items-center justify-center border border-neutral-500/10 bg-neutral-500/5">
+      <Image
+        key={itemId}
+        src="/icons/logo-icon-sample.png"
+        alt=""
+        width={540}
+        height={540}
+        className={animateIn ? 'animate-mochi-bounce' : 'opacity-0'}
+        style={animateIn ? { animationDelay: `${delay}ms` } : undefined}
+      />
+      <div className="absolute inset-x-0 bottom-0 h-1 bg-neutral-500" />
     </div>
   );
 }
 
-function CardCharacter({ item }: { item: NavItem }) {
-  const hasCharacter = item.characterImage && !item.characterImage.includes('placeholder');
-
+function CardFooter() {
   return (
-    <div className="absolute inset-x-0 -top-8 bottom-12 flex items-end justify-center">
-      <div className="relative h-full w-full">
-        {hasCharacter ? (
-          <Image
-            src={item.characterImage}
-            alt={item.title}
-            fill
-            priority
-            className="scale-[1.5] object-contain object-bottom"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <span className={`text-6xl ${item.cardBackground ? 'text-white/30' : 'text-stone-300'}`}>
-              ?
-            </span>
-          </div>
-        )}
-      </div>
+    <div className="mt-auto flex justify-between pt-2 opacity-60">
+      <Terminal size={14} />
+      <ChevronRight size={14} className="animate-bounce-x" />
     </div>
   );
-}
-
-function CardTitle({ item }: { item: NavItem }) {
-  const hasBackground = !!item.cardBackground;
-
-  return (
-    <div
-      className={`absolute bottom-0 left-0 right-0 p-4 ${
-        hasBackground ? 'backdrop-blur-sm bg-black/30' : ''
-      }`}
-    >
-      <div className={`border-t pt-3 ${hasBackground ? 'border-white/30' : 'border-border'}`}>
-        <h3
-          className={`text-xl font-bold tracking-wider ${
-            hasBackground ? 'text-white' : 'text-primary'
-          }`}
-        >
-          {item.title}
-        </h3>
-        <p
-          className={`text-sm tracking-widest ${
-            hasBackground ? 'text-white/80' : 'text-muted-foreground'
-          }`}
-        >
-          {item.description}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function CardHoverEffect({ show }: { show: boolean }) {
-  if (!show) return null;
-  return <div className="absolute inset-0 bg-black/5 transition-opacity duration-300" />;
 }
