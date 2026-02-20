@@ -23,6 +23,7 @@ type Slice = {
 };
 
 const SLICES: Slice[] = [
+  // === Pass 1: ズーム中 ===
   // 上部（静止）
   { top: 40, height: 2, animName: null,            animDuration: 0,      animDelay: 0 },
   // 上グリッチ → 左10%（4fで発動、4f保持、6fで戻る = 10f）
@@ -35,18 +36,15 @@ const SLICES: Slice[] = [
   { top: 49, height: 2, animName: 'glitch-mid-r',  animDuration: 6 * F,  animDelay: 8 * F },
   // 下部（静止）
   { top: 51, height: 4, animName: null,            animDuration: 0,      animDelay: 0 },
-];
 
-const KEYFRAMES_CSS = [
-  // コンテナ: ズームアウト + 回転（7f）+ フェードイン（5f）
-  '@keyframes glitch-zoom{0%{transform:scale(3) rotate(0deg);opacity:0}35%{opacity:1}100%{transform:scale(1) rotate(-10deg);opacity:1}}',
-  // 上帯: 即座に左10%、4f保持(40%)、6fかけて戻る
-  '@keyframes glitch-top{0%{transform:translateX(0)}3%{transform:translateX(-10%)}40%{transform:translateX(-10%)}100%{transform:translateX(0)}}',
-  // 真ん中上: 即座に左15%、6fかけて戻る
-  '@keyframes glitch-mid-l{0%{transform:translateX(0)}5%{transform:translateX(-15%)}100%{transform:translateX(0)}}',
-  // 真ん中下: 即座に右15%、6fかけて戻る
-  '@keyframes glitch-mid-r{0%{transform:translateX(0)}5%{transform:translateX(15%)}100%{transform:translateX(0)}}',
-].join('');
+  // === Pass 2: 着地の瞬間（33fで発動） ===
+  { top: 41, height: 3, animName: 'glitch-land-l', animDuration: 6 * F,  animDelay: 33 * F },
+  { top: 48, height: 3, animName: 'glitch-land-r', animDuration: 6 * F,  animDelay: 33 * F },
+
+  // === Pass 3: 着地後（42fで発動） ===
+  { top: 43, height: 2, animName: 'glitch-post-r', animDuration: 5 * F,  animDelay: 42 * F },
+  { top: 50, height: 2, animName: 'glitch-post-l', animDuration: 5 * F,  animDelay: 42 * F },
+];
 
 export function GlitchImage({
   src,
@@ -71,10 +69,8 @@ export function GlitchImage({
       }}
       aria-label={alt}
     >
-      <style dangerouslySetInnerHTML={{ __html: KEYFRAMES_CSS }} />
-
       {/* レイアウト確保用 */}
-      <img src={src} alt={alt} className="invisible" />
+      <img src={src} alt={alt} className="invisible w-full max-w-[1260px]" />
 
       {SLICES.map((slice, i) => (
         <img
